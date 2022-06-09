@@ -1,7 +1,6 @@
-use rouille::Request;
 use rouille::Response;
 use serde::Serialize;
-use std::cell::RefCell;
+
 use std::io::Read;
 use std::sync::Mutex;
 use structopt::StructOpt;
@@ -46,7 +45,7 @@ fn main() {
         let key = &url["/keys/".len()..];
 
         let mut state = state.lock().unwrap();
-        let index = state.requests.iter().position(|(k, v)| k == key);
+        let index = state.requests.iter().position(|(k, _)| k == key);
         let data = request.data();
 
         match request.method() {
@@ -89,6 +88,4 @@ fn main() {
             }
         }
     });
-
-    log::info!("done");
 }
