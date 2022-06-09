@@ -63,17 +63,17 @@ fn handle_key(state: &Mutex<State>, request: &Request, url: String) -> Response 
     let index = state.requests.iter().position(|(k, _)| k == key);
     let data = request.data();
 
-    match request.method() {
-        "GET" if index.is_none() => {
+    match (request.method(), index, data) {
+        ("GET", None, _) => {
             log::info!("GET {} - empty ", url);
             state.requests.push((key.to_string(), None));
             return Response::text("");
         }
 
-        "GET" => match state.requests[index.unwrap()].1.take() {
+        ("GET", Some(index), _) => match state.requests[index].1.take() {
             Some(value) => {
                 log::info!("GET {} - value", url);
-                state.requests.remove(index.unwrap());
+                state.requests.remove(index);
                 return Response::text(value);
             }
             None => {
@@ -81,28 +81,27 @@ fn handle_key(state: &Mutex<State>, request: &Request, url: String) -> Response 
                 return Response::text("");
             }
         },
-        "POST" if index.is_none() => {
+        ("POST", None, _) => {
             log::info!("POST {} - key request not found", url);
             return Response::empty_404();
         }
 
-        "POST" if data.is_none() => {
+        ("POST", Some(_), None) => {
             log::info!("POST {} - request has no request body", url);
             return Response::empty_400();
         }
 
-        "POST" => {
+        ("POST", Some(index), Some(mut data)) => {
             log::info!("POST {} - providing value", url);
 
-            let mut rb = data.unwrap();
             let mut value = String::new();
-            rb.read_to_string(&mut value)
+            data.read_to_string(&mut value)
                 .expect("fail to parse request body as string");
 
-            state.requests[index.unwrap()].1 = Some(value);
+            state.requests[index].1 = Some(value);
             return Response::empty_204();
         }
-        method => {
+        (method, _, _) => {
             log::info!("{} {} - invalid method", method, url);
             return Response::empty_404();
         }
