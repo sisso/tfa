@@ -4,6 +4,13 @@ use serde::Serialize;
 use std::cell::RefCell;
 use std::io::Read;
 use std::sync::Mutex;
+use structopt::StructOpt;
+
+#[derive(StructOpt)]
+struct CommandArgs {
+    #[structopt(default_value = "8881", long)]
+    port: i32,
+}
 
 #[derive(Serialize)]
 struct KeyResp {
@@ -18,13 +25,15 @@ struct State {
 }
 
 fn main() {
+    let args = CommandArgs::from_args();
+
     env_logger::builder()
         .filter(None, log::LevelFilter::Debug)
         .init();
 
     let state = Mutex::new(State { requests: vec![] });
 
-    rouille::start_server("0.0.0.0:8881", move |request| {
+    rouille::start_server(format!("0.0.0.0:{}", args.port), move |request| {
         let url = request.url();
 
         if url.starts_with("/keys/") {
