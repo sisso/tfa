@@ -28,7 +28,7 @@ fn main() {
     let args = CommandArgs::from_args();
 
     env_logger::builder()
-        .filter(None, log::LevelFilter::Debug)
+        .filter(None, log::LevelFilter::Info)
         .init();
 
     let state = Mutex::new(State { requests: vec![] });
@@ -40,7 +40,6 @@ fn main() {
             log::debug!("{:?}", request);
 
             let key = &url["/keys/".len()..];
-            log::info!("key {}", key);
 
             let mut state = state.lock().unwrap();
             let index = state.requests.iter().position(|(k, v)| k == key);
@@ -48,24 +47,30 @@ fn main() {
 
             match request.method() {
                 "GET" if index.is_none() => {
+                    log::info!("GET {} - empty ", url);
                     state.requests.push((key.to_string(), None));
                     return Response::json(&KeyResp { value: None });
                 }
 
                 "GET" => {
+                    log::info!("GET {} - value", url);
                     return Response::json(&KeyResp {
                         value: state.requests[index.unwrap()].1.take(),
                     });
                 }
                 "POST" if index.is_none() => {
+                    log::info!("POST {} - key request not found", url);
                     return Response::empty_404();
                 }
 
                 "POST" if data.is_none() => {
+                    log::info!("POST {} - request has no request body", url);
                     return Response::empty_400();
                 }
 
                 "POST" => {
+                    log::info!("POST {} - providing value", url);
+
                     let mut rb = data.unwrap();
                     let mut value = String::new();
                     rb.read_to_string(&mut value)
