@@ -557,9 +557,6 @@ name = "serde"
 version = "1.0.137"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
-dependencies = [
- "serde_derive",
-]
 
 [[package]]
 name = "serde_derive"
@@ -678,8 +675,6 @@ dependencies = [
  "env_logger",
  "log",
  "rouille",
- "serde",
- "serde_json",
  "structopt",
 ]
 

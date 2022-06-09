@@ -1,5 +1,4 @@
 use rouille::Response;
-use serde::Serialize;
 
 use std::io::Read;
 use std::sync::Mutex;
@@ -9,11 +8,6 @@ use structopt::StructOpt;
 struct CommandArgs {
     #[structopt(default_value = "8881", long)]
     port: i32,
-}
-
-#[derive(Serialize)]
-struct KeyResp {
-    value: Option<Value>,
 }
 
 type Key = String;
@@ -56,15 +50,19 @@ fn run_server(port: i32) {
             "GET" if index.is_none() => {
                 log::info!("GET {} - empty ", url);
                 state.requests.push((key.to_string(), None));
-                return Response::json(&KeyResp { value: None });
+                return Response::text("");
             }
 
-            "GET" => {
-                log::info!("GET {} - value", url);
-                return Response::json(&KeyResp {
-                    value: state.requests[index.unwrap()].1.take(),
-                });
-            }
+            "GET" => match state.requests[index.unwrap()].1.take() {
+                Some(value) => {
+                    log::info!("GET {} - value", url);
+                    return Response::text(value);
+                }
+                None => {
+                    log::info!("GET {} - empty", url);
+                    return Response::text("");
+                }
+            },
             "POST" if index.is_none() => {
                 log::info!("POST {} - key request not found", url);
                 return Response::empty_404();
