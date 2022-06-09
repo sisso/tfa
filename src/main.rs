@@ -30,9 +30,13 @@ fn main() {
         .filter(None, log::LevelFilter::Info)
         .init();
 
+    run_server(args.port);
+}
+
+fn run_server(port: i32) {
     let state = Mutex::new(State { requests: vec![] });
 
-    rouille::start_server(format!("0.0.0.0:{}", args.port), move |request| {
+    rouille::start_server(format!("0.0.0.0:{}", port), move |request| {
         let url = request.url();
 
         if !url.starts_with("/keys/") {
