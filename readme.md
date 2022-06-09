@@ -28,4 +28,8 @@
     # admin query for keys, request is not there
     $ curl localhost:8881/keys
     { "items": [] }
+
+# Listening to key requests
+
+[scripts/listener.sh](scripts/listener.sh)
     
