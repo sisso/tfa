@@ -9,6 +9,11 @@
     $ curl localhost:8881/keys/123
     <empty>
 
+    # admin query for keys requests
+    $ curl localhost:8881/keys
+    { "items": ["123"] }
+    
+
     # admin provide the value
     curl localhost:8881/kys/1243 -X POST -d "ha" -v
 
@@ -19,4 +24,8 @@
     # any subsequently request after the first value return is back to null 
     $ curl localhost:8881/keys/123
     <empty>
+
+    # admin query for keys, request is not there
+    $ curl localhost:8881/keys
+    { "items": [] }
     
