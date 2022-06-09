@@ -36,54 +36,58 @@ fn main() {
     rouille::start_server(format!("0.0.0.0:{}", args.port), move |request| {
         let url = request.url();
 
-        if url.starts_with("/keys/") {
-            log::debug!("{:?}", request);
-
-            let key = &url["/keys/".len()..];
-
-            let mut state = state.lock().unwrap();
-            let index = state.requests.iter().position(|(k, v)| k == key);
-            let data = request.data();
-
-            match request.method() {
-                "GET" if index.is_none() => {
-                    log::info!("GET {} - empty ", url);
-                    state.requests.push((key.to_string(), None));
-                    return Response::json(&KeyResp { value: None });
-                }
-
-                "GET" => {
-                    log::info!("GET {} - value", url);
-                    return Response::json(&KeyResp {
-                        value: state.requests[index.unwrap()].1.take(),
-                    });
-                }
-                "POST" if index.is_none() => {
-                    log::info!("POST {} - key request not found", url);
-                    return Response::empty_404();
-                }
-
-                "POST" if data.is_none() => {
-                    log::info!("POST {} - request has no request body", url);
-                    return Response::empty_400();
-                }
-
-                "POST" => {
-                    log::info!("POST {} - providing value", url);
-
-                    let mut rb = data.unwrap();
-                    let mut value = String::new();
-                    rb.read_to_string(&mut value)
-                        .expect("fail to parse request body as string");
-
-                    state.requests[index.unwrap()].1 = Some(value);
-                    return Response::empty_204();
-                }
-                _ => {}
-            }
+        if !url.starts_with("/keys/") {
+            log::info!("GET {} - invalid url", url);
+            return Response::empty_404();
         }
 
-        return Response::empty_404();
+        log::debug!("{:?}", request);
+
+        let key = &url["/keys/".len()..];
+
+        let mut state = state.lock().unwrap();
+        let index = state.requests.iter().position(|(k, v)| k == key);
+        let data = request.data();
+
+        match request.method() {
+            "GET" if index.is_none() => {
+                log::info!("GET {} - empty ", url);
+                state.requests.push((key.to_string(), None));
+                return Response::json(&KeyResp { value: None });
+            }
+
+            "GET" => {
+                log::info!("GET {} - value", url);
+                return Response::json(&KeyResp {
+                    value: state.requests[index.unwrap()].1.take(),
+                });
+            }
+            "POST" if index.is_none() => {
+                log::info!("POST {} - key request not found", url);
+                return Response::empty_404();
+            }
+
+            "POST" if data.is_none() => {
+                log::info!("POST {} - request has no request body", url);
+                return Response::empty_400();
+            }
+
+            "POST" => {
+                log::info!("POST {} - providing value", url);
+
+                let mut rb = data.unwrap();
+                let mut value = String::new();
+                rb.read_to_string(&mut value)
+                    .expect("fail to parse request body as string");
+
+                state.requests[index.unwrap()].1 = Some(value);
+                return Response::empty_204();
+            }
+            method => {
+                log::info!("{} {} - invalid method", method, url);
+                return Response::empty_404();
+            }
+        }
     });
 
     log::info!("done");
